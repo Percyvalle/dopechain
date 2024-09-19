@@ -15,10 +15,6 @@ public:
 	}
 
 	Net::OWNER_MESSAGE<DopechainMessage> ServerPing() {
-		if (!IsConnected()) {
-			return nullptr;
-		}
-		
 		DopechainMessage msg = MessageFactory::Create(DopechainTypeMessage::SERVER_PING, DopechainStatusMessage::CLIENT_STATUS);
 
 		Send(msg);
@@ -27,10 +23,6 @@ public:
 	}
 
 	Net::OWNER_MESSAGE<DopechainMessage> Registration(const std::string& _address, const std::uint16_t& _port) {
-		if (!IsConnected()) {
-			return nullptr;
-		}
-		
 		info = DopechainPeerInfo(_address, _port);
 
 		DopechainMessage msg = MessageFactory::Create(DopechainTypeMessage::REGISTRATION_PEER, DopechainStatusMessage::CLIENT_STATUS, info);

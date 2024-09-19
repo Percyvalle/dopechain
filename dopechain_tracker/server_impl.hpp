@@ -19,6 +19,7 @@ public:
 	~DopechainTracker() = default;
 private:
 	void OnMessage(std::shared_ptr<Net::OwnerMessage<DopechainMessage>> _ownMsg) {
+		spdlog::info("Message: {0}:{1}", _ownMsg->Message().StringStatus(), _ownMsg->Message().StringType());
 		mediator.HandleMessage(_ownMsg);
 	}
 

@@ -3,9 +3,12 @@
 int main(int argc, char** argv) {
 	DopechainTracker tracker{ 20702, Utils::GetCountCPU() };
 
-	tracker.Start();
+	if (!tracker.Start()) {
+		spdlog::info("The server did not start!");
+		return EXIT_FAILURE;
+	}
 
-	while (true) {
+	while (tracker.IsRunning()) {
 		tracker.Update(false);
 		tracker.CheckClientConnection();
 	}

@@ -9,6 +9,7 @@
 
 #define GENESIS_INDEX NULL
 #define GENESIS_DIFFICULTY 3
+#define GENESIS_PREV_HASH std::string(64, '0')
 
 using MerkleTree = merkle::Tree;
 
@@ -88,7 +89,7 @@ public:
 	}
 
 	bool IsCreated() {
-		return !headerBlock.timeCreate.empty() && !headerBlock.currHash.empty();
+		return !headerBlock.currHash.empty();
 	}
 
 	void PrintBlock() {
@@ -109,21 +110,19 @@ public:
 };
 
 void to_json(json& _json, const Block& _block) {
-	_json = json{ {"HEADER",
-				  {"NONCE", _block.headerBlock.nonce},
+	_json = json{ {"NONCE", _block.headerBlock.nonce},
 				  {"HASH", _block.headerBlock.currHash},
 				  {"COUNTER", _block.headerBlock.counter},
 				  {"PREV_HASH", _block.headerBlock.prevHash},
 				  {"DIFFICULTY", _block.headerBlock.difficulty},
-				  {"TIME_CREATE", _block.headerBlock.timeCreate}}};
+				  {"TIME_CREATE", _block.headerBlock.timeCreate}};
 }
 
 void from_json(const json& _json, Block& _block) {
-	const auto& inner_obj = _json.at("HEADER");
-	inner_obj.at("NONCE").get_to(_block.headerBlock.nonce);
-	inner_obj.at("HASH").get_to(_block.headerBlock.currHash);
-	inner_obj.at("COUNTER").get_to(_block.headerBlock.counter);
-	inner_obj.at("PREV_HASH").get_to(_block.headerBlock.prevHash);
-	inner_obj.at("DIFFICULTY").get_to(_block.headerBlock.difficulty);
-	inner_obj.at("TIME_CREATE").get_to(_block.headerBlock.timeCreate);
+	_json.at("NONCE").get_to(_block.headerBlock.nonce);
+	_json.at("HASH").get_to(_block.headerBlock.currHash);
+	_json.at("COUNTER").get_to(_block.headerBlock.counter);
+	_json.at("PREV_HASH").get_to(_block.headerBlock.prevHash);
+	_json.at("DIFFICULTY").get_to(_block.headerBlock.difficulty);
+	_json.at("TIME_CREATE").get_to(_block.headerBlock.timeCreate);
 }

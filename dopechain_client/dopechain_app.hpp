@@ -24,6 +24,20 @@ private:
 	std::atomic_bool application_flag = true;
 
 	CLOptions optionsParser;
+
+	std::thread asyncProcessHandleThread;
+
+	void AsyncProcessHandle() {
+		while (serverLocalPeer->IsRunning()) {
+			serverLocalPeer->Update(false);
+			serverLocalPeer->CheckClientConnection();
+		}
+	}
+
+	void StartAsyncProcessHandle() {
+		asyncProcessHandleThread = std::thread(&DopechainApp::AsyncProcessHandle, this);
+	}
+
 public:
 	DopechainApp(int argc, char** argv) : optionsParser{argc, argv} {
 		optionsParser.AddOptions<std::string>("--server-address", "-sa", "Server tracker address");
@@ -31,6 +45,15 @@ public:
 		optionsParser.AddOptions<std::uint16_t>("--client-port", "-cp", "Client port");
 
 		optionsParser.Parse();
+	}
+
+	~DopechainApp() {
+		serverLocalPeer->Stop();
+		clientTrackerServer->Disconnect();
+
+		if (asyncProcessHandleThread.joinable()) {
+			asyncProcessHandleThread.join();
+		}
 	}
 
 	bool ConnectionsTrackerServer() {
@@ -56,7 +79,7 @@ public:
 	}
 
 	bool RegistrationTrackerServer() {
-		Net::OWNER_MESSAGE<DopechainMessage> ownMessageReg = clientTrackerServer->Registration(serverLocalPeer->GetAddress(), serverLocalPeer->GetPort());
+		Net::OWNER_MESSAGE<DopechainMessage> ownMessageReg = clientTrackerServer->Registration(serverLocalPeer->Address(), serverLocalPeer->Port());
 		if (ownMessageReg == nullptr) {
 			spdlog::error("Registration peer: unable to connect to server");
 			return false;
@@ -80,14 +103,14 @@ public:
 		}
 		else {
 			result = blockchainLogic->InitBlockchain(DopechainBlockchain::JOIN);
+			result = result && peerManager->BlockchainSync(blockchainLogic);
+		
+			blockchainLogic->AddBlock(1, 3, blockchainLogic->Genesis().Hash());
+
+			blockchainLogic->PrintBlockchain();
 		}
 
-		if (!result) {
-			spdlog::error("Initialize chain: failed");
-			return false;
-		}
-
-		return true;
+		return result;
 	}
 
 	bool InitializePeers() {
@@ -122,7 +145,6 @@ public:
 	bool Initialize() {
 		spdlog::set_level(spdlog::level::debug);
 
-		peerManager = std::make_shared<DopechainPeerManager>();
 		blockchainLogic = std::make_shared<DopechainBlockchain>();
 		serverLocalPeer = std::make_shared<DopechainServer>(LOCAL_SERVER_PORT, LOGICAL_PROCESSORS_SIZE, blockchainLogic);
 		clientTrackerServer = std::make_shared<DopechainClient>();
@@ -139,9 +161,13 @@ public:
 			return false;
 		}
 
+		StartAsyncProcessHandle();
+
 		if (!InitializePeers()) {
 			return false;
 		}
+
+		peerManager = std::make_shared<DopechainPeerManager>(peerContainer);
 
 		if (!InitializeChain()) {
 			return false;
@@ -159,9 +185,6 @@ public:
 	}
 
 	void Update() {
-		serverLocalPeer->Update(false);
-		serverLocalPeer->CheckClientConnection();
-
 		while (!clientTrackerServer->Incoming().empty()) {
 			Net::OWNER_MESSAGE<DopechainMessage> message = clientTrackerServer->Incoming().pop_front();
 			spdlog::info("Message Type {} | Message Status {}", static_cast<int>(message->Message().Type()), static_cast<int>(message->Message().Status()));

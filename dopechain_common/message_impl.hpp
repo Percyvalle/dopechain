@@ -3,20 +3,7 @@
 #include <Definitions.hpp>
 #include <network/MessageInterface.hpp>
 
-enum DopechainTypeMessage {
-	PEERS_LIST = 200,
-	SERVER_PING = 210,
-	REGISTRATION_PEER = 220,
-	BLOCKCHAIN_SYNC = 230
-};
-
-enum DopechainStatusMessage {
-	CLIENT_STATUS = 100,
-	UNDEFINED = 110,
-	SUCCESS = 120,
-	FAILURE	= 130
-};
-
+#include "message_mapping.hpp"
 
 struct DopechainHeader : Net::IHeader<DopechainTypeMessage, DopechainStatusMessage> {};
 struct DopechainBody : Net::IBody {};
@@ -47,6 +34,24 @@ struct DopechainMessage : Net::IMessage<DopechainHeader, DopechainBody> {
 
 	DopechainStatusMessage Status() {
 		return Header().Status();
+	}
+
+	std::string StringType() {
+		DopechainTypeMessage typeMessage = Type();
+		if (messageTypeMapping.find(typeMessage) == messageTypeMapping.end()) {
+			return "";
+		}
+
+		return messageTypeMapping.at(typeMessage);
+	}
+
+	std::string StringStatus() {
+		DopechainStatusMessage statusMessage = Status();
+		if (messageStatusMapping.find(statusMessage) == messageStatusMapping.end()) {
+			return "";
+		}
+
+		return messageStatusMapping.at(statusMessage);
 	}
 
 	std::string ToString() {

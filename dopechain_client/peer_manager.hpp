@@ -2,63 +2,63 @@
 
 #include <vector>
 #include <memory>
+#include <queue>
 
 #include "peer_connection.hpp"
 
-#define POINTER_PEER std::shared_ptr<DopechainPeer>
-
 class DopechainPeerManager {
 private:
-	std::vector<POINTER_PEER> peers;
+	std::shared_ptr<DopechainContainerPeers> containerPeers;
+	std::vector<std::shared_ptr<DopechainPeer>> peersConnections;
 
 public:
+	DopechainPeerManager(std::shared_ptr<DopechainContainerPeers> _container) : containerPeers{_container} {
+		for (DopechainPeerInfo& info : containerPeers->List()) {
+			std::shared_ptr<DopechainPeer> peer = std::make_shared<DopechainPeer>(info);
 
-	std::size_t Size() {
-		return peers.size();
-	}
+			peer->Connect();
 
-	bool Empty() {
-		return peers.empty();
-	}
-
-	bool ConnectToPeer(DopechainPeerInfo& _peerInfo) {
-		POINTER_PEER connection = std::make_shared<DopechainPeer>(_peerInfo);
-
-		connection->Connect(_peerInfo.address, _peerInfo.port);
-
-		if (connection->IsConnected()) {
-			peers.push_back(connection);
-			return true;
+			if (!peer->IsConnected()) {
+				spdlog::warn("Connection to {}:{} failed", peer->Address(), peer->Port());
+			}
+			else {
+				peersConnections.push_back(peer);
+			}
 		}
-
-		return false;
 	}
 
-	bool ConnectToPeer(const DopechainContainerPeers& _container) {
+	bool BlockchainSync(std::shared_ptr<DopechainBlockchain> _blockchain) {
+		
+		std::size_t maxVersion = NULL;
+		std::shared_ptr<DopechainPeer> maxVersionPeer = nullptr;
 
-		for (DopechainPeerInfo& peerInfo : _container.List()) {
-			if (!ConnectToPeer(peerInfo)) {
-				spdlog::warn("Failed connection to {}:{}", peerInfo.address, peerInfo.port);
-				return false;
+		for (std::shared_ptr<DopechainPeer> peer : peersConnections) {
+			Net::OWNER_MESSAGE<DopechainMessage> blockchainVersionResponse = peer->BlockchainVersion();
+
+			if (blockchainVersionResponse != nullptr) {
+				json message = blockchainVersionResponse->Message().ToJson();
+				if (message.contains("VERSION")) {
+					std::size_t version = message.at("VERSION").get<std::size_t>();
+					if (maxVersion < version) {
+						maxVersion = version;
+						maxVersionPeer = peer;
+					}
+				}				
 			}
 		}
 
-		return true;
-	}
-
-	bool ConnectToPeer(std::shared_ptr<DopechainContainerPeers> _container) {
-
-		for (DopechainPeerInfo& peerInfo : _container->List()) {
-			if (!ConnectToPeer(peerInfo)) {
-				spdlog::warn("Failed connection to {}:{}", peerInfo.address, peerInfo.port);
-				return false;
-			}
+		if (maxVersionPeer == nullptr || maxVersion == NULL) {
+			return false;
 		}
 
-		return true;
-	}
+		Net::OWNER_MESSAGE<DopechainMessage> blockchainSyncResponse = maxVersionPeer->BlockhcainSync();
 
-	void Disconnect(POINTER_PEER _peer) {
-		peers.erase(std::remove_if(peers.begin(), peers.end(), [_peer](POINTER_PEER _othr) { return _peer == _othr; }), peers.end());
+		if (blockchainSyncResponse == nullptr) {
+			return false;
+		}
+
+		*_blockchain = blockchainSyncResponse->Message().ToJson();;
+
+		return true;
 	}
 };

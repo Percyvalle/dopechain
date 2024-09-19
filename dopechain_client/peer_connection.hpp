@@ -14,29 +14,30 @@ public:
 		info = _peerInfo;
 	}
 
+	void Connect() {
+		Net::ClientInterface<DopechainMessage>::Connect(info.address, info.port);
+	}
+
 	void Ping() {
 		DopechainMessage message = MessageFactory::Create(DopechainTypeMessage::SERVER_PING, DopechainStatusMessage::CLIENT_STATUS);
 
 		Send(message);
 	}
 
-	bool BlockhcainSync(DopechainBlockchain& _blockchain) {
+	Net::OWNER_MESSAGE<DopechainMessage> BlockchainVersion() {
+		DopechainMessage message = MessageFactory::Create(DopechainTypeMessage::BLOCKCHAIN_VERSION, DopechainStatusMessage::CLIENT_STATUS);
+
+		Send(message);
+
+		return WaitingResponse();
+	}
+
+	Net::OWNER_MESSAGE<DopechainMessage> BlockhcainSync() {
 		DopechainMessage message = MessageFactory::Create(DopechainTypeMessage::BLOCKCHAIN_SYNC, DopechainStatusMessage::CLIENT_STATUS);
 
 		Send(message);
 
-		Net::OWNER_MESSAGE<DopechainMessage> responseOwnMessage = WaitingResponse();
-
-		if (responseOwnMessage == nullptr) {
-			return false;
-		}
-
-		DopechainMessage responseMessage = responseOwnMessage->Message();
-
-
-
-
-		return true;
+		return WaitingResponse();
 	}
 
 	Net::OWNER_MESSAGE<DopechainMessage> WaitingResponse() {

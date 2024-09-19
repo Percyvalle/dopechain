@@ -20,8 +20,23 @@ public:
 		JOIN = 2
 	};
 
+public:
+	void operator=(const DopechainBlockchain& _other) {
+		chain = _other.chain;
+		mempool = _other.mempool;
+	}
+
 	Block& Genesis() {
-		return (*chain.begin());
+		return chain.front();
+	}
+
+	std::size_t Size() {
+		return chain.size();
+	}
+
+	// The blockchain version will be determined by its size
+	std::size_t Version() {
+		return chain.size();
 	}
 
 	bool InitBlockchain(StateBlockchain _state = StateBlockchain::UNDEFINED) {
@@ -37,18 +52,9 @@ public:
 
 			case StateBlockchain::GENESIS:
 			{
-				spdlog::info("genesis block generated");
+				spdlog::info("genesis block generated");;
 
-				std::string prevHash(64, '0');
-
-				Block genesisBlock{ GENESIS_INDEX, GENESIS_DIFFICULTY, prevHash };
-				genesisBlock.CalculateHash();
-				
-				if (!genesisBlock.IsCreated()) {
-					return false;
-				}
-
-				chain.push_back(genesisBlock);
+				AddBlock(GENESIS_INDEX, GENESIS_DIFFICULTY, GENESIS_PREV_HASH);
 
 				return true;
 			}
@@ -63,18 +69,24 @@ public:
 		return true;
 	}
 
-	bool AddBlock(Block& _block) {
-		if (_block.IsGenesisBlock()) {
-			return false;
+	void AddBlock(Block& _block) {
+		if (!_block.IsCreated()) {
+			_block.CalculateHash();
 		}
 
-		if (_block.IsCreated()) {
-			chain.push_back(_block);
-		}
-
-		return true;
+		chain.push_back(_block);
 	}
 
+	void AddBlock(std::size_t _counter, std::size_t _difficulty, std::string _prevHash) {
+		Block block{ _counter, _difficulty, _prevHash };
+		AddBlock(block);
+	}
+
+	void AddBlock(std::size_t _counter, std::size_t _difficulty, std::string _prevHash, std::forward_list<Transaction> _transactions) {
+		Block block{ _counter, _difficulty, _prevHash, _transactions };
+		AddBlock(block);
+	}
+						
 	bool IsValid() {
 		std::string previous_hash;
 		for (Block& i : chain) {
