@@ -1,1 +1,3 @@
 # dopechain
+
+xProjectLib == main
