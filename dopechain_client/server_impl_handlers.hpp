@@ -22,7 +22,7 @@ public:
 		
 		json jsonBlockchain = *blockchain;
 
-		spdlog::info(jsonBlockchain.dump());
+		spdlog::debug(jsonBlockchain.dump());
 
 		return MessageFactory::Create(DopechainTypeMessage::BLOCKCHAIN_SYNC, DopechainStatusMessage::SUCCESS, jsonBlockchain);
 	}
@@ -42,5 +42,13 @@ public:
 		}
 
 		return MessageFactory::Create(DopechainTypeMessage::BLOCKCHAIN_VERSION, DopechainStatusMessage::FAILURE);
+	}
+};
+
+class SignatureVerification : public Net::MessageHandler<DopechainMessage> {
+private:
+public:
+	virtual DopechainMessage Handle(Net::OWNER_MESSAGE<DopechainMessage> _msg) {
+		
 	}
 };

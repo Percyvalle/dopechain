@@ -27,6 +27,10 @@ public:
 		}
 	}
 
+	bool TransactionNotification(std::shared_ptr<DopechainBlockchain> _blockchain) {
+
+	}
+
 	bool BlockchainSync(std::shared_ptr<DopechainBlockchain> _blockchain) {
 		
 		std::size_t maxVersion = NULL;

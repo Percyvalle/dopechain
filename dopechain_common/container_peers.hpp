@@ -6,6 +6,7 @@
 
 class DopechainContainerPeers {
 private:
+	friend inline void to_json(json&, const DopechainContainerPeers&);
 	friend inline void from_json(const json&, DopechainContainerPeers&);
 	
 	std::unordered_set<DopechainPeerInfo, DopechainPeerInfoHash> peers;
@@ -39,7 +40,7 @@ public:
 		return peers.empty();
 	}
 
-	bool AddPeer(DopechainPeerInfo& _peer) {
+	bool AddPeer(const DopechainPeerInfo& _peer) {
 		std::lock_guard<std::mutex> lock(containerMtx);
 		peers.insert(_peer);
 		return true;
@@ -56,14 +57,14 @@ public:
 		return peers.empty();
 	}
 
-	bool Find(DopechainPeerInfo& _peer){
+	bool Find(const DopechainPeerInfo& _peer){
 		std::lock_guard<std::mutex> lock(containerMtx);
 		return __Find(_peer);
 	}
 
-	bool Find(const std::string& _address, const std::uint16_t& _port) {
+	bool Find(const std::string& _address, const std::uint16_t& _port, const std::string& _username) {
 		std::lock_guard<std::mutex> lock(containerMtx);
-		DopechainPeerInfo tempPeer(_address, _port);
+		DopechainPeerInfo tempPeer(_address, _port, _username);
 		return __Find(tempPeer);
 	}
 
@@ -86,15 +87,20 @@ public:
 		std::lock_guard<std::mutex> lock(containerMtx);
 		std::vector<DopechainPeerInfo> list;
 
-		for (DopechainPeerInfo i : peers) {
+		for (const DopechainPeerInfo& i : peers) {
 			list.push_back(i);
 		}
 
 		return list;
 	}
 
+	// Temporary
+	void PrintPeers() {
+		spdlog::info(Json().dump());
+	}
+
 private:
-	bool __Find(DopechainPeerInfo& _peer) {
+	bool __Find(const DopechainPeerInfo& _peer) {
 		if (peers.find(_peer) == peers.end()) {
 			return false;
 		}
@@ -105,7 +111,7 @@ private:
 																				
 
 inline void to_json(json& _json, const DopechainContainerPeers& _container) {
-	auto listPeer = _container.List();
+	std::vector<DopechainPeerInfo> listPeer = _container.List();
 	for (const DopechainPeerInfo& i : listPeer) {
 		_json.emplace_back(i);
 	}

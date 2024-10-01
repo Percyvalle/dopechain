@@ -11,7 +11,6 @@ private:
 
 	std::vector<Block> chain;
 	std::vector<Transaction> mempool;
-
 public:
 								  
 	enum StateBlockchain {
@@ -24,6 +23,10 @@ public:
 	void operator=(const DopechainBlockchain& _other) {
 		chain = _other.chain;
 		mempool = _other.mempool;
+	}
+
+	std::vector<Transaction>& Mempool() {
+
 	}
 
 	Block& Genesis() {
@@ -109,6 +112,7 @@ public:
 		return true;
 	}
 
+	// Temporary
 	void PrintBlockchain() {
 		for (Block& i : chain) {
 			i.PrintBlock();

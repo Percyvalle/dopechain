@@ -8,7 +8,8 @@ enum class DopechainTypeMessage : int {
 	SERVER_PING = 210,
 	REGISTRATION_PEER = 220,
 	BLOCKCHAIN_SYNC = 230,
-	BLOCKCHAIN_VERSION = 240
+	BLOCKCHAIN_VERSION = 240,
+	SIGNATURE_VERIFICATION = 250
 };
 
 enum class DopechainStatusMessage : int{
@@ -23,7 +24,8 @@ static const std::unordered_map<DopechainTypeMessage, std::string> messageTypeMa
 	{ DopechainTypeMessage::SERVER_PING, "SERVER_PING" },
 	{ DopechainTypeMessage::BLOCKCHAIN_SYNC, "BLOCKCHAIN_SYNC" },
 	{ DopechainTypeMessage::REGISTRATION_PEER, "REGISTRATION_PEER" },
-	{ DopechainTypeMessage::BLOCKCHAIN_VERSION, "BLOCKCHAIN_VERSION" }
+	{ DopechainTypeMessage::BLOCKCHAIN_VERSION, "BLOCKCHAIN_VERSION" },
+	{ DopechainTypeMessage::SIGNATURE_VERIFICATION, "SIGNATURE_VERIFICATION" }
 };
 
 static const std::unordered_map<DopechainStatusMessage, std::string> messageStatusMapping = {

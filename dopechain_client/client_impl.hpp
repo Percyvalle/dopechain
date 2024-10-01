@@ -22,8 +22,8 @@ public:
 		return WaitingResponse();
 	}
 
-	Net::OWNER_MESSAGE<DopechainMessage> Registration(const std::string& _address, const std::uint16_t& _port) {
-		info = DopechainPeerInfo(_address, _port);
+	Net::OWNER_MESSAGE<DopechainMessage> Registration(const std::string& _address, const std::uint16_t& _port, const std::string& _username) {
+		info = DopechainPeerInfo(_address, _port, _username);
 
 		DopechainMessage msg = MessageFactory::Create(DopechainTypeMessage::REGISTRATION_PEER, DopechainStatusMessage::CLIENT_STATUS, info);
 

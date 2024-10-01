@@ -21,9 +21,10 @@ inline UUIDv4::UUID GenerateUuidPeer(const std::string& _address, const std::uin
 	return retUuid;
 }
 
-struct DopechainPeerInfo {
+struct  DopechainPeerInfo {
 	UUIDv4::UUID uuid;
 	std::string address;
+	std::string username;
 	std::uint16_t port;
 
 	DopechainPeerInfo() = default;
@@ -31,25 +32,36 @@ struct DopechainPeerInfo {
 	{
 		uuid = GenerateUuidPeer(_address, _port);
 	}
+	DopechainPeerInfo(const std::string& _address, const std::uint16_t& _port, const std::string& _username) : address(_address), port(_port), username(_username)
+	{
+		uuid = GenerateUuidPeer(_address, _port);
+	}
+
+	DopechainPeerInfo(DopechainPeerInfo&& _other) = default;
+	DopechainPeerInfo(const DopechainPeerInfo& _other) = default;
+	DopechainPeerInfo& operator=(DopechainPeerInfo&& _other) = default;
+	DopechainPeerInfo& operator=(const DopechainPeerInfo& _other) = default;
+
 
 	bool operator==(const DopechainPeerInfo& _other) const {
-		return address.compare(_other.address) == 0 && port == _other.port;
+		return username == _other.username && address == _other.address && port == _other.port;
 	}
 };
 
 
 struct DopechainPeerInfoHash {
 	std::size_t operator()(const DopechainPeerInfo& _arg) const {
+		std::size_t hash_username = std::hash<std::string>()(_arg.username);
 		std::size_t hash_address = std::hash<std::string>()(_arg.address);
 		std::size_t hash_port = std::hash<std::uint16_t>()(_arg.port);
 
-		return hash_address ^ (hash_port << 1);
+		return hash_address ^ (hash_port << 1) ^ (hash_username << 2);
 	}
 };
 
 inline void to_json(json& _json, const DopechainPeerInfo& _info) {
-
 	_json = json{ { _info.uuid.str(), {
+					{"USERNAME", _info.username},
 					{"ADDRESS", _info.address},
 					{"PORT", _info.port} } } };
 }
@@ -66,4 +78,5 @@ inline void from_json(const json& _json, DopechainPeerInfo& _info) {
 	const auto& inner_obj = _json.begin().value();
 	_info.port = inner_obj.at("PORT").get<std::uint16_t>();
 	_info.address = inner_obj.at("ADDRESS").get<std::string>();
+	_info.username = inner_obj.at("USERNAME").get<std::string>();
 }

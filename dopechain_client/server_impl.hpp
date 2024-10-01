@@ -15,19 +15,20 @@ public:
 		mediator.RegisterHandler(DopechainTypeMessage::SERVER_PING, std::make_unique<Ping>());
 		mediator.RegisterHandler(DopechainTypeMessage::BLOCKCHAIN_SYNC, std::make_unique<BlockchainSync>(_blockchain));
 		mediator.RegisterHandler(DopechainTypeMessage::BLOCKCHAIN_VERSION, std::make_unique<BlockchainVersion>(_blockchain));
+		mediator.RegisterHandler(DopechainTypeMessage::SIGNATURE_VERIFICATION, std::make_unique<SignatureVerification>());
 	}
 
 private:
 	void OnMessage(std::shared_ptr<Net::OwnerMessage<DopechainMessage>> _ownMsg) {
-		spdlog::info("Message: {0}:{1}", _ownMsg->Message().StringStatus(), _ownMsg->Message().StringType());
+		spdlog::debug("Message: {0}:{1}", _ownMsg->Message().StringStatus(), _ownMsg->Message().StringType());
 		mediator.HandleMessage(_ownMsg);
 	};
 
 	void OnConnect(std::shared_ptr<Net::Connection<DopechainMessage>> _handleClient) {
-		spdlog::info("Connection: {}:{}", _handleClient->GetAddressRemote(), _handleClient->GetPortRemote());
+		spdlog::debug("Connection: {}:{}", _handleClient->GetAddressRemote(), _handleClient->GetPortRemote());
 	};
 
 	void OnDisconnect(std::shared_ptr<Net::Connection<DopechainMessage>> _handleClient) {
-		spdlog::info("Disconnect: {}:{}", _handleClient->GetAddressRemote(), _handleClient->GetPortRemote());
+		spdlog::debug("Disconnect: {}:{}", _handleClient->GetAddressRemote(), _handleClient->GetPortRemote());
 	};
 };

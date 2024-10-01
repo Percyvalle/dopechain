@@ -5,12 +5,14 @@
 #include "blockchain.hpp"
 #include "peer_manager.hpp"
 
-#include <application/CLOptions.hpp>
+#include <application/CommadLineParser.hpp>
+#include <application/InteractiveInput.hpp>
 #include <application/ApplicationInteface.hpp>
 
 #define LOCAL_SERVER_PORT optionsParser.Get<std::uint16_t>("--client-port")
 #define SERVER_TRACKER_PORT optionsParser.Get<std::uint16_t>("--server-port")
 #define SERVER_TRACKER_ADDRESS optionsParser.Get<std::string>("--server-address")
+#define DEBUG_MODE_ENABLED optionsParser.Get<bool>("--debug")
 #define LOGICAL_PROCESSORS_SIZE Utils::GetCountCPU()
 
 class DopechainApp : public IApp {
@@ -23,7 +25,8 @@ private:
 
 	std::atomic_bool application_flag = true;
 
-	CLOptions optionsParser;
+	InteractiveInput inputParser;
+	CommadLineParser optionsParser; 
 
 	std::thread asyncProcessHandleThread;
 
@@ -43,6 +46,7 @@ public:
 		optionsParser.AddOptions<std::string>("--server-address", "-sa", "Server tracker address");
 		optionsParser.AddOptions<std::uint16_t>("--server-port", "-sp", "Server tracker port");
 		optionsParser.AddOptions<std::uint16_t>("--client-port", "-cp", "Client port");
+		optionsParser.AddOptions<bool>("--debug", "-d", "On debug output", true);
 
 		optionsParser.Parse();
 	}
@@ -79,7 +83,7 @@ public:
 	}
 
 	bool RegistrationTrackerServer() {
-		Net::OWNER_MESSAGE<DopechainMessage> ownMessageReg = clientTrackerServer->Registration(serverLocalPeer->Address(), serverLocalPeer->Port());
+		Net::OWNER_MESSAGE<DopechainMessage> ownMessageReg = clientTrackerServer->Registration(serverLocalPeer->Address(), serverLocalPeer->Port(), "danil");
 		if (ownMessageReg == nullptr) {
 			spdlog::error("Registration peer: unable to connect to server");
 			return false;
@@ -90,7 +94,7 @@ public:
 			spdlog::error("Registration peer: server is not responding");
 			return false;
 		}
-
+																		
 		return true;
 	}
 
@@ -104,10 +108,6 @@ public:
 		else {
 			result = blockchainLogic->InitBlockchain(DopechainBlockchain::JOIN);
 			result = result && peerManager->BlockchainSync(blockchainLogic);
-		
-			blockchainLogic->AddBlock(1, 3, blockchainLogic->Genesis().Hash());
-
-			blockchainLogic->PrintBlockchain();
 		}
 
 		return result;
@@ -143,7 +143,13 @@ public:
 	}
 
 	bool Initialize() {
-		spdlog::set_level(spdlog::level::debug);
+
+		if (DEBUG_MODE_ENABLED) {
+			spdlog::set_level(spdlog::level::debug);
+		}
+		else {
+			spdlog::set_level(spdlog::level::info);
+		}
 
 		blockchainLogic = std::make_shared<DopechainBlockchain>();
 		serverLocalPeer = std::make_shared<DopechainServer>(LOCAL_SERVER_PORT, LOGICAL_PROCESSORS_SIZE, blockchainLogic);
@@ -159,7 +165,7 @@ public:
 
 		if (!InitializeLocalPeerServer()) {
 			return false;
-		}
+		}																				
 
 		StartAsyncProcessHandle();
 
@@ -185,9 +191,29 @@ public:
 	}
 
 	void Update() {
+
+		inputParser.Registration("print", &DopechainApp::CallbackPrint, this);
+		inputParser.Registration("peers", &DopechainApp::CallbackPeers, this);
+		inputParser.Registration("transfer", &DopechainApp::CallbackTransfer, this);
+
 		while (!clientTrackerServer->Incoming().empty()) {
 			Net::OWNER_MESSAGE<DopechainMessage> message = clientTrackerServer->Incoming().pop_front();
-			spdlog::info("Message Type {} | Message Status {}", static_cast<int>(message->Message().Type()), static_cast<int>(message->Message().Status()));
+			spdlog::debug("Message Type {} | Message Status {}", static_cast<int>(message->Message().Type()), static_cast<int>(message->Message().Status()));
 		}
+
+		inputParser.Execute();
+	}
+
+	void CallbackPrint() {
+		blockchainLogic->PrintBlockchain();
+	}
+
+	void CallbackPeers() {
+		peerContainer->PrintPeers();
+	}
+
+	void CallbackTransfer() {
+		std::string recipient = inputParser.InputString("recipient: ");
+		int amount = inputParser.InputInt("amount: ");
 	}
 };
