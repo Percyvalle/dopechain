@@ -15,7 +15,6 @@ public:
 		mediator.RegisterHandler(DopechainTypeMessage::SERVER_PING, std::make_unique<Ping>());
 		mediator.RegisterHandler(DopechainTypeMessage::BLOCKCHAIN_SYNC, std::make_unique<BlockchainSync>(_blockchain));
 		mediator.RegisterHandler(DopechainTypeMessage::BLOCKCHAIN_VERSION, std::make_unique<BlockchainVersion>(_blockchain));
-		mediator.RegisterHandler(DopechainTypeMessage::SIGNATURE_VERIFICATION, std::make_unique<SignatureVerification>());
 	}
 
 private:

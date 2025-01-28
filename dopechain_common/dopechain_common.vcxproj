@@ -136,7 +136,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="container_peers.hpp" />
+    <ClInclude Include="ecdsa_wrapper.hpp" />
     <ClInclude Include="message_impl.hpp" />
+    <ClInclude Include="message_mapping.hpp" />
     <ClInclude Include="peers_info.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

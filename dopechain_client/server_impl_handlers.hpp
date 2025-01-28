@@ -44,11 +44,3 @@ public:
 		return MessageFactory::Create(DopechainTypeMessage::BLOCKCHAIN_VERSION, DopechainStatusMessage::FAILURE);
 	}
 };
-
-class SignatureVerification : public Net::MessageHandler<DopechainMessage> {
-private:
-public:
-	virtual DopechainMessage Handle(Net::OWNER_MESSAGE<DopechainMessage> _msg) {
-		
-	}
-};

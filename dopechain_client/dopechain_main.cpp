@@ -4,21 +4,17 @@
 
 int main(int argc, char** argv) {
 
-	DopechainSigner signer;
-	EVP_PKEY* keyPair = signer.GenerateKey();
-	signer.ExtractPublicKey(keyPair);
+	DopechainApp app{argc, argv};
+	
+	if (!app.Initialize()) {
+		getchar();
+		return EXIT_FAILURE;
+	}
 
-	//DopechainApp app{argc, argv};
-	//
-	//if (!app.Initialize()) {
-	//	getchar();
-	//	return EXIT_FAILURE;
-	//}
-
-	//spdlog::info("Initialize success");
-	//while (app.IsWorking()) {
-	//	app.Update();
-	//}
+	spdlog::info("Initialize success");
+	while (app.IsWorking()) {
+		app.Update();
+	}
 
 	getchar();
 
